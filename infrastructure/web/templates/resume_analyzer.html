@@ -1,0 +1,78 @@
+<html>
+    <head>
+        <title>Resume Analyzer</title>
+        <link rel = "stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    </head>
+    <body>
+        <nav>
+            <div class="nav-content">
+                <a href="/" class="logo">TalentScan</a>
+                <div class="nav-links">
+                    <a href="/">Home</a>
+                    <a href="/resume">Resume</a>
+                    <a href="#">Contact</a>
+                </div>
+            </div>
+        </nav>
+            <main>
+                    <h1>Resume Analyzer</h1>
+                    <div class="container">
+                        <div class="pdf-uploader">
+                            <h3>Drop your resume here or choose a file.</h3>
+                            <p>PDF & DOCX only. Max 2MB file size.</p>
+                            <input type="file" id = "resumeInput" accept=".pdf">
+                            <label for="resume-upload">Upload Your Resume</label>
+                        </div>
+                        <button onclick="analyzeResume()"> Analyse Resume</button>
+                        <div id="result"></div>
+                    </div>
+            </main>
+
+            <script>
+                async function analyzeResume(){
+                    const fileInput = document.getElementById('resumeInput');
+                    const resultDiv = document.getElementById('result');
+
+                    if(!fileInput.files[0]) {
+                        alert('Please select a PDF File');
+                        return;
+                    }
+
+                    const formData = new FormData();
+                    formData.append('resume', fileInput.files[0])
+
+                    resultDiv.innerHTML = '<div class="loading">Analyzing...<div class="spinner"></div></div>';
+
+                    try {
+                        const response = await fetch('/analyze-resume', {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        const data = await response.json()
+
+                        resultDiv.innerHTML = `
+                            <div class="analysis-result">
+                                <h3>ATS Score: ${data.ats_score}/100</h3>
+                                <div class="section">
+                                    <h4>Strengths:</h4>
+                                    <ul>${data.strengths.map(s => `<li>${s}</li>`).join('')}</ul>
+                                </div>
+                                <div class="section">
+                                    <h4>Improvements Needed:</h4>
+                                    <ul>${data.improvements.map(i => `<li>${i}</li>`).join('')}</ul>
+                                </div>
+                                <div class="section">
+                                    <h4>Suggestions:</h4>
+                                    <p>${data.suggestions}</p>
+                                </div>
+                            </div>
+                        `;
+                    } catch (err) {
+                        resultDiv.innerHTML = `<div class="error">Error: ${err.message}</div>`;
+                    }
+                }
+            </script>
+        </body>
+        </html>
